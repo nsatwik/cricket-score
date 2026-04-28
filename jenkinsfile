@@ -1,0 +1,35 @@
+pipeline {
+    agent any 
+    environment {
+        AWS_CREDENTIALS = credentials('aws-credentials')
+        ECR = "public.ecr.aws/j9z9l3h4/docker_cicd_repo"
+        REGION = "ap-south-1"
+    }
+    stages {
+        stage("git_checkout") {
+            steps {
+                git 'https://github.com/nsatwik/cricket-score.git'
+            }
+        }
+        stage("docker_login") {
+            steps {
+                sh "aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/j9z9l3h4"
+            }
+        }
+        stage("docker_build") {
+            steps {
+                sh "docker build -t docker_cicd_repo ."
+            }
+        }
+        stage("docker_tag") {
+            steps {
+                sh "docker tag docker_cicd_repo:latest public.ecr.aws/j9z9l3h4/docker_cicd_repo:latest"
+            }
+        }
+        stage("docker_push") {
+            steps {
+                sh "docker push public.ecr.aws/j9z9l3h4/docker_cicd_repo:latest"
+            }
+        }  
+    }
+}
